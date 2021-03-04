@@ -1,0 +1,31 @@
+{
+  "name": "manhua",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "ts-node ./src/index.ts"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/limichange/manhua.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/limichange/manhua/issues"
+  },
+  "homepage": "https://github.com/limichange/manhua#readme",
+  "dependencies": {
+    "@types/fs-extra": "^9.0.8",
+    "fs-extra": "^9.1.0",
+    "p-limit": "^3.1.0",
+    "p-retry": "^4.4.0",
+    "pdf-lib": "^1.16.0",
+    "playwright": "^1.9.1",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.2.2"
+  }
+}
