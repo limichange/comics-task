@@ -6,13 +6,13 @@ import { createPDF } from './pdf'
 import * as fs from 'fs-extra'
 import { showMem } from './showMem'
 
-const homePage = 'https://manhua.dmzj.com/areawuyi/'
-const skip = 33
+const homePage = 'https://manhua.dmzj.com/guanxiaojiedezhongbiaogongfang/'
+const skip = 0
 
 main()
 
 async function main() {
-  setInterval(showMem, 1000)
+  const intervalId = setInterval(showMem, 1000)
 
   const browser = await playwright['chromium'].launch({
     // headless: false,
@@ -50,6 +50,7 @@ async function main() {
     }
   }
 
+  clearInterval(intervalId)
   await browser.close()
 }
 
