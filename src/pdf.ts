@@ -14,7 +14,7 @@ export async function createPDF(name: string, chapter: string, num: number) {
 
   fs.ensureDirSync('pdf')
   fs.ensureDirSync(`pdf/${name}`)
-  await fs.writeFile(`pdf/${name}/${chapter}.pdf`, pdfBytes)
+  await fs.writeFile(`pdf/${name}/${name}-${chapter}.pdf`, pdfBytes)
 }
 
 async function addImage(pdfDoc: PDFDocument, image: string) {

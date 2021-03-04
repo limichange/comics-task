@@ -1,15 +1,19 @@
 import * as pLimit from 'p-limit'
 import pRetry from 'p-retry'
 import * as playwright from 'playwright'
-import { BrowserContext, Page } from 'playwright'
+import { Browser, BrowserContext, Page } from 'playwright'
 import { createPDF } from './pdf'
 import * as fs from 'fs-extra'
+import { showMem } from './showMem'
 
 const homePage = 'https://manhua.dmzj.com/areawuyi/'
+const skip = 33
 
 main()
 
 async function main() {
+  setInterval(showMem, 1000)
+
   const browser = await playwright['chromium'].launch({
     // headless: false,
   })
@@ -27,17 +31,20 @@ async function main() {
     aTags.map((item) => item.getAttribute('href'))
   )
 
+  await page.close()
+  await context.close()
+
   console.log('all: ' + aTags.length)
 
-  const allPageUrls = aTags.map(
-    (item) => `https://manhua.dmzj.com${item}#@page=`
-  )
+  const allPageUrls = aTags
+    .map((item) => `https://manhua.dmzj.com${item}#@page=`)
+    .slice(skip)
 
   for await (const url of allPageUrls) {
     console.log('url', url)
 
     try {
-      await getOne(context, url)
+      await getOne(browser, url)
     } catch (err) {
       console.error('url error', url, err)
     }
@@ -46,7 +53,9 @@ async function main() {
   await browser.close()
 }
 
-async function getOne(context: BrowserContext, pageUrl: string) {
+async function getOne(browser: Browser, pageUrl: string) {
+  const context = await browser.newContext()
+
   //
   const pageNumArray = await pRetry(
     async () => {
@@ -66,13 +75,14 @@ async function getOne(context: BrowserContext, pageUrl: string) {
     }
   )
 
-  //
+  console.log('currentPageNum', pageNumArray.length)
 
+  //
   const limit = pLimit(2)
   const tasks = []
 
-  for (const currentPageNum of pageNumArray) {
-    const input = limit(async () => {
+  for await (const currentPageNum of pageNumArray) {
+    const input = limit(async (currentPageNum) => {
       try {
         return await pRetry(() => pageTask(context, currentPageNum, pageUrl), {
           retries: 20,
@@ -80,12 +90,14 @@ async function getOne(context: BrowserContext, pageUrl: string) {
       } catch (err) {
         console.error('url error', pageUrl, err)
       }
-    })
+    }, currentPageNum)
 
     tasks.push(input)
   }
 
   const [result] = await Promise.all(tasks)
+
+  context.close()
 
   console.log(result)
 
@@ -135,8 +147,6 @@ async function pageTask(
 
   await page.goto(`${pageUrl}${pageNum}`)
 
-  console.log('load', new Date().getTime() - start.getTime())
-
   const chapter = await page.$eval(
     '.display_middle > span',
     (element) => element.textContent
@@ -153,6 +163,8 @@ async function pageTask(
     chapter: chapter.trim(),
     path,
   }
+
+  console.log('load', path, new Date().getTime() - start.getTime())
 
   if (fs.existsSync(path)) {
     return result
@@ -171,7 +183,7 @@ async function pageTask(
     path,
   })
 
-  console.log(path, new Date().getTime() - start.getTime())
+  console.log('generate', path, new Date().getTime() - start.getTime())
 
   await page.close()
 
